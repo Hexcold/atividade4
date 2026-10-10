@@ -1,4 +1,3 @@
-# Blueprint do Render: cria o serviço web a partir do Dockerfile, no plano gratuito
 services:
   - type: web
     name: atividade4

@@ -3,15 +3,11 @@ const os = require('os');
 const app = express();
 
 app.use(express.json());
-// O Render fica atrás de um proxy HTTPS
 app.set('trust proxy', true);
 
-// A plataforma informa a porta pela variável PORT (padrão 8080)
 const PORT = process.env.PORT || 8080;
-
 const CASAS = ['Grifinória', 'Sonserina', 'Corvinal', 'Lufa-Lufa'];
 
-// "Banco de dados" em memória
 let proximoId = 4;
 let personagens = [
     { id: 1, nome: 'Harry', sobrenome: 'Potter', casa: 'Grifinória' },
@@ -45,52 +41,31 @@ function buscarIndice(req, res) {
     return indice;
 }
 
-// GET com timeout curto; devolve null se não responder
-async function buscar(url) {
-    try {
-        const resposta = await fetch(url, { signal: AbortSignal.timeout(1500) });
-        return resposta.ok ? await resposta.text() : null;
-    } catch {
-        return null;
-    }
-}
-
-// O Render injeta variáveis RENDER_* no container; fora dele, é execução local
-function infoNuvem() {
-    if (process.env.RENDER) {
-        return {
-            ambiente: 'Render',
-            servico: process.env.RENDER_SERVICE_NAME,
-            instancia: process.env.RENDER_INSTANCE_ID,
-            commit: process.env.RENDER_GIT_COMMIT?.slice(0, 7),
-        };
-    }
-    return { ambiente: 'local' };
-}
-
 app.get('/', async (req, res) => {
-    const ip = await buscar('https://api.ipify.org');
+    let ip = null;
+    try {
+        const resposta = await fetch('https://api.ipify.org', { signal: AbortSignal.timeout(2000) });
+        ip = await resposta.text();
+    } catch (erro) {
+        console.log(`Deu erro ao buscar o ip: ${erro}`);
+    }
+
     res.json({
         mensagem: 'API ok :)',
-        ...infoNuvem(),
-        ipPublicoDoServidor: ip,
+        ambiente: process.env.RENDER ? 'Render' : 'local',
+        servico: process.env.RENDER_SERVICE_NAME,
+        commit: process.env.RENDER_GIT_COMMIT,
+        ip,
         hostname: os.hostname(),
-        url: `${req.protocol}://${req.get('host')}`,
-        rotas: [
-            'GET    /personagem',
-            'GET    /personagem/:id',
-            'POST   /personagem',
-            'PUT    /personagem/:id',
-            'PATCH  /personagem/:id',
-            'DELETE /personagem/:id',
-        ],
     });
 });
 
-// READ - lista todos os personagens (filtro opcional ?casa=)
+// READ - lista todos os personagens
 app.get('/personagem', (req, res) => {
-    const { casa } = req.query;
-    res.json(casa ? personagens.filter((p) => p.casa === casa) : personagens);
+    if (req.query.casa) {
+        return res.json(personagens.filter((p) => p.casa === req.query.casa));
+    }
+    res.json(personagens);
 });
 
 // READ - busca um personagem pelo id
@@ -108,10 +83,10 @@ app.post('/personagem', (req, res) => {
     const { nome, sobrenome, casa } = req.body;
     const personagem = { id: proximoId++, nome, sobrenome: sobrenome || null, casa: casa || null };
     personagens.push(personagem);
-    res.status(201).location(`/personagem/${personagem.id}`).json(personagem);
+    res.status(201).json(personagem);
 });
 
-// UPDATE (completo) - substitui todos os campos do personagem
+// UPDATE - atualiza um personagem pelo id
 app.put('/personagem/:id', (req, res) => {
     const indice = buscarIndice(req, res);
     if (indice === -1) return;
@@ -124,20 +99,20 @@ app.put('/personagem/:id', (req, res) => {
     res.json(personagens[indice]);
 });
 
-// UPDATE (parcial) - altera só os campos enviados
+// UPDATE - atualiza só os campos enviados
 app.patch('/personagem/:id', (req, res) => {
     const indice = buscarIndice(req, res);
     if (indice === -1) return;
 
-    const erro = validar(req.body || {}, true);
+    const dados = req.body || {};
+    const erro = validar(dados, true);
     if (erro) return res.status(400).json({ erro });
 
-    const { nome, sobrenome, casa } = req.body;
-    const alteracoes = Object.fromEntries(
-        Object.entries({ nome, sobrenome, casa }).filter(([, valor]) => valor !== undefined)
-    );
-    personagens[indice] = { ...personagens[indice], ...alteracoes };
-    res.json(personagens[indice]);
+    const personagem = personagens[indice];
+    if (dados.nome !== undefined) personagem.nome = dados.nome;
+    if (dados.sobrenome !== undefined) personagem.sobrenome = dados.sobrenome;
+    if (dados.casa !== undefined) personagem.casa = dados.casa;
+    res.json(personagem);
 });
 
 // DELETE - remove um personagem pelo id

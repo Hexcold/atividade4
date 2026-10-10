@@ -1,40 +1,40 @@
-# Atividade 4 — API REST + Render
+# Atividade 4 - API REST no Render
 
-API REST em **Node.js + Express** com um CRUD de personagens de Hogwarts, empacotada com **Docker** e publicada no **[Render](https://render.com)** (plano gratuito, sem cartão de crédito).
+API em Node.js com Express fazendo um CRUD de personagens de Harry Potter. Roda em um container Docker e está publicada no Render (plano free).
 
-**No ar em:** https://atividade4-i406.onrender.com
+Link: [atividade4-i406.onrender.com](https://atividade4-i406.onrender.com)
 
 ## Rotas
 
-| Método | Rota              | O que faz                                    | Sucesso |
-|--------|-------------------|----------------------------------------------|---------|
-| GET    | `/`               | Status do servidor (ambiente, IP público, commit) | 200 |
-| GET    | `/personagem`     | Lista todos (filtro opcional `?casa=Sonserina`) | 200 |
-| GET    | `/personagem/:id` | Busca um personagem                          | 200 / 404 |
-| POST   | `/personagem`     | Cria um personagem                           | 201 |
-| PUT    | `/personagem/:id` | Substitui **todos** os campos                | 200 / 404 |
-| PATCH  | `/personagem/:id` | Altera **só** os campos enviados             | 200 / 404 |
-| DELETE | `/personagem/:id` | Remove um personagem                         | 200 / 404 |
+| Método | Rota              | Descrição                                                   |
+|--------|-------------------|-------------------------------------------------------------|
+| GET    | `/`               | Mostra se a API está ok, o ambiente e o IP                  |
+| GET    | `/personagem`     | Lista os personagens (dá pra filtrar com `?casa=Sonserina`) |
+| GET    | `/personagem/:id` | Busca um personagem pelo id                                 |
+| POST   | `/personagem`     | Cria um personagem                                          |
+| PUT    | `/personagem/:id` | Atualiza todos os campos                                    |
+| PATCH  | `/personagem/:id` | Atualiza só os campos enviados                              |
+| DELETE | `/personagem/:id` | Remove um personagem                                        |
 
-Corpo esperado (JSON):
+Exemplo de body:
 
 ```json
 { "nome": "Luna", "sobrenome": "Lovegood", "casa": "Corvinal" }
 ```
 
-`nome` é obrigatório no POST e no PUT. `casa` precisa ser uma de: Grifinória, Sonserina, Corvinal, Lufa-Lufa.
+O `nome` é obrigatório no POST e no PUT, e a `casa` tem que ser Grifinória, Sonserina, Corvinal ou Lufa-Lufa.
 
-> Os dados ficam em memória, então voltam ao estado inicial quando o container reinicia. No plano gratuito o Render desliga o serviço depois de 15 minutos sem acesso; a próxima requisição demora cerca de 1 minuto para acordar e os dados voltam ao inicial.
+Os dados ficam em memória, então quando o servidor reinicia volta tudo pros 3 personagens iniciais. No plano free o Render desliga o serviço depois de 15 min sem acesso, aí o primeiro acesso demora uns segundos e os dados resetam.
 
-## Rodando localmente
+## Rodar localmente
 
 ```bash
 npm install
-npm start                 # http://localhost:8080
-./testar.sh               # testa todas as rotas
+npm start
+./testar.sh
 ```
 
-## Rodando com Docker
+## Rodar com Docker
 
 ```bash
 docker build -t atividade4 .
@@ -42,22 +42,12 @@ docker run --rm -p 8080:8080 atividade4
 ./testar.sh http://localhost:8080
 ```
 
-## Deploy no Render
+## Deploy
 
-O arquivo [render.yaml](render.yaml) descreve o serviço (Docker, plano `free`, região Virginia), então o Render faz tudo sozinho a partir do repositório no GitHub:
+O deploy foi feito no Render como Web Service usando o Dockerfile, ligado neste repositório. Todo push na `main` faz um deploy novo.
 
-1. Suba esta pasta para um repositório público no GitHub.
-2. Abra `https://render.com/deploy?repo=https://github.com/SEU_USUARIO/SEU_REPOSITORIO`, entre com a conta do GitHub e clique em **Deploy Blueprint**.
-3. O Render constrói a imagem com o Dockerfile e publica em `https://atividade4-xxxx.onrender.com`.
-
-Cada `git push` na branch principal gera um novo deploy automaticamente. Para testar o CRUD na nuvem:
+Para testar a versão online:
 
 ```bash
 ./testar.sh https://atividade4-i406.onrender.com
 ```
-
-A rota `/` mostra o ambiente (`Render`), o nome do serviço, o commit publicado e o IP público do servidor.
-
-### Removendo depois da entrega
-
-No painel do Render: **atividade4 → Settings → Delete Web Service**.
