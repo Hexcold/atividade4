@@ -2,6 +2,8 @@
 
 API REST em **Node.js + Express** com um CRUD de personagens de Hogwarts, empacotada com **Docker** e publicada no **[Render](https://render.com)** (plano gratuito, sem cartão de crédito).
 
+**No ar em:** https://atividade4-i406.onrender.com
+
 ## Rotas
 
 | Método | Rota              | O que faz                                    | Sucesso |
@@ -51,7 +53,7 @@ O arquivo [render.yaml](render.yaml) descreve o serviço (Docker, plano `free`, 
 Cada `git push` na branch principal gera um novo deploy automaticamente. Para testar o CRUD na nuvem:
 
 ```bash
-./testar.sh https://atividade4-xxxx.onrender.com
+./testar.sh https://atividade4-i406.onrender.com
 ```
 
 A rota `/` mostra o ambiente (`Render`), o nome do serviço, o commit publicado e o IP público do servidor.
